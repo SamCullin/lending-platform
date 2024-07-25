@@ -46,7 +46,7 @@ contract LendingBorrowingTest is Test {
 
     function testBorrowAndRepay() public {
         uint256 value = 100;
-        uint256 tokenId = vault.createCollateral(address(this), value);
+        uint256 tokenId = vault.createCollateral(user1, value);
 
         vm.startPrank(user1);
         vault.approve(address(lendingBorrowing), tokenId);
@@ -60,6 +60,7 @@ contract LendingBorrowingTest is Test {
         assertEq(borrowed, borrowAmount, "Borrowed amount should be equal to the borrowed amount");
         assertEq(collateral, value, "Collateral value should be equal to the value of the NFT");
 
+        stableCoin.approve(address(lendingBorrowing), borrowAmount);
         lendingBorrowing.repay(borrowAmount);
         assertEq(stableCoin.balanceOf(address(this)), 0, "Stablecoin balance should be 0");
 
@@ -80,6 +81,7 @@ contract LendingBorrowingTest is Test {
 
         uint256 borrowAmount = 50;
         lendingBorrowing.borrow(borrowAmount);
+        stableCoin.approve(address(lendingBorrowing), borrowAmount);
         lendingBorrowing.repay(borrowAmount);
         lendingBorrowing.withdrawNFT(tokenId);
 

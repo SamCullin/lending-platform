@@ -37,4 +37,6 @@ contract CollateralVaultTest is Test {
         vault.transferFrom(user1, user2, tokenId);
         assertEq(vault.ownerOf(tokenId), user2);
     }
+
+    
 }

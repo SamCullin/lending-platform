@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./CollateralVault.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
 contract LendingBorrowing is IERC721Receiver  {
     using SafeERC20 for IERC20;
@@ -21,14 +22,10 @@ contract LendingBorrowing is IERC721Receiver  {
     // Mapping of deposited collateral by users
     mapping(address => uint256[]) public _depsitedCollateral;
 
-
-
-    
     event BorrowedStable(address indexed user, uint256 amount);
     event RepaidStable(address indexed user, uint256 amount);
     event DepositCollateral(address indexed user, uint256 tokenId, uint256 value);
     event WithdrawCollateral(address indexed user, uint256 tokenId, uint256 value);
-
 
     constructor(IERC20 _stableCoin, CollateralVault _collateralVault) {
         stableCoin = _stableCoin;
@@ -46,7 +43,6 @@ contract LendingBorrowing is IERC721Receiver  {
         uint256 userBorrowed = _borrowedAmounts[msg.sender];
         require(userCollateral - userBorrowed >= amount, "Cannot borrow more than collateral value");
 
-        
         _borrowedAmounts[msg.sender] += amount;
         stableCoin.safeTransfer(msg.sender, amount);
 
@@ -60,13 +56,13 @@ contract LendingBorrowing is IERC721Receiver  {
         uint256 userBorrowed = _borrowedAmounts[msg.sender];
         require(userBorrowed > 0, "No borrowed amount to repay");
         require(userBorrowed >= amount, "Repay amount exceeds borrowed amount");
-        
-        _borrowedAmounts[msg.sender] -= amount;
+
         stableCoin.safeTransferFrom(msg.sender, address(this), amount);
+
+        _borrowedAmounts[msg.sender] -= amount;
 
         emit RepaidStable(msg.sender, amount);
     }
-
 
     function depositNFT(uint256 tokenId) external {
         collateralVault.safeTransferFrom(msg.sender, address(this), tokenId);
@@ -107,8 +103,7 @@ contract LendingBorrowing is IERC721Receiver  {
     }
 
     // Implement the IERC721Receiver interface
-    function onERC721Received(address , address , uint256 , bytes calldata ) external pure override returns (bytes4) {
+    function onERC721Received(address, address, uint256, bytes calldata) external pure override returns (bytes4) {
         return this.onERC721Received.selector;
     }
-
 }
