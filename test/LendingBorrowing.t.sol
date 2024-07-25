@@ -4,15 +4,9 @@ pragma solidity ^0.8.0;
 import "forge-std/Test.sol";
 import "../src/LendingBorrowing.sol";
 import "../src/CollateralVault.sol";
+import "../src/MockStable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-contract MockStableCoin is ERC20 {
-    constructor() ERC20("MockStableCoin", "MSC") {}
-
-    function mint(address to, uint256 amount) external {
-        _mint(to, amount);
-    }
-}
 
 contract LendingBorrowingTest is Test {
     LendingBorrowing public lendingBorrowing;
