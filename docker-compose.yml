@@ -26,11 +26,9 @@ services:
         volumes:
             - .:/usr/src/app
         working_dir: /usr/src/app
-        entrypoint:
+        command:
             [
-                "sh",
-                "-c",
-                "forge build && forge script script/DeployContracts.s.sol --rpc-url $RPC_URL --broadcast",
+                "forge script script/DeployContracts.s.sol --rpc-url $RPC_URL --broadcast",
             ]
 
 networks:

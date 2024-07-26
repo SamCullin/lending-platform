@@ -64,3 +64,23 @@ $ forge --help
 $ anvil --help
 $ cast --help
 ```
+
+
+
+== Logs ==
+  MockStableCoin deployed at: 0x34A1D3fff3958843C43aD80F30b94c510645C316
+  CollateralVault deployed at: 0x90193C961A926261B756D1E5bb255e67ff9498A1
+  LendingBorrowing deployed at: 0xA8452Ec99ce0C64f20701dB7dD3abDb607c00496
+
+## Setting up 1 EVM.
+
+test test test test test test test test test test test junk
+
+
+### Struggles
+
+
+#### Disconnecting wallet
+There seems to be an issue when you disconnect using the metamask sdk 
+the useAccount hook will update before the useSdk hook which causes an issue on 
+when a sync between metamask sdk and wagmi sdk. 

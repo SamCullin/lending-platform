@@ -1,5 +1,5 @@
 [compiler.solc]
 remappings = [
-    "forge-std/=lib/forge-std/src/",
-    "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/"
+    "forge-std/=apps/blockchain/lib/forge-std/src/",
+    "@openzeppelin/contracts/=apps/blockchain/lib/openzeppelin-contracts/contracts/"
 ]
