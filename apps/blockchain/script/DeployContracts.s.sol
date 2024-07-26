@@ -56,10 +56,10 @@ contract DeployContracts is Script {
         vm.startBroadcast(userPrivateKey);
 
         // Approve the lending contract to transfer user's NFTs
-        collateralVault.setApprovalForAll(address(lendingBorrowing), true);
-
-        // Deposit NFTs into the lending contract
+        collateralVault.approve(address(lendingBorrowing), tokenId_1);
         lendingBorrowing.depositNFT(tokenId_1);
+
+        collateralVault.approve(address(lendingBorrowing), tokenId_2);
         lendingBorrowing.depositNFT(tokenId_2);
 
         // Take out a small loan from the lending contract

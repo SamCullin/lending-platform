@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useLendingContract, useStableContract } from "../lib/contracts";
+import { useLendingContract, useStableContract } from "./useContract";
 
 import { useSDK } from "@metamask/sdk-react-ui";
 import { ethers } from "ethers";
@@ -45,6 +45,7 @@ export const useCollateralStats = () => {
 		});
 	};
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
 	useEffect(() => {
 		if (lendingContractReady && stableContractReady && account) {
 			setLoading(true);

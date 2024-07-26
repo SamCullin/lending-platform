@@ -3,7 +3,7 @@ import {
 	useCollateralContract,
 	useLendingContract,
 	useStableContract,
-} from "../lib/contracts";
+} from "./useContract";
 
 import { useSDK } from "@metamask/sdk-react-ui";
 import { ethers } from "ethers";
@@ -29,16 +29,19 @@ export const useCollateralDeposited = () => {
 		const loaded_nfts = await Promise.all(
 			nfts.map(async (nftId) => {
 				const value = await collateralContract?.getCollateralValue(nftId);
-				return {
+				const data = {
 					tokenId: ethers.utils.hexValue(nftId),
 					value: ethers.utils.formatUnits(value, 18),
 					status: CollateralStatus.deposited,
 				};
+				console.log("Loaded Deposited NFT", JSON.stringify(data));
+				return data;
 			}),
 		);
 		setDepositedNFTs(loaded_nfts);
 	};
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
 	useEffect(() => {
 		if (lendingContractReady && collateralContractReady && account) {
 			setLoading(true);

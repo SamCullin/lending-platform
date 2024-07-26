@@ -3,7 +3,7 @@ import {
 	useCollateralContract,
 	useLendingContract,
 	useStableContract,
-} from "../lib/contracts";
+} from "./useContract";
 
 import { useSDK } from "@metamask/sdk-react-ui";
 import { ethers } from "ethers";
@@ -44,6 +44,7 @@ export const useCollateralOwned = () => {
 							? CollateralStatus.approved
 							: CollateralStatus.owned,
 				};
+				console.log("Loaded Owned NFT", JSON.stringify({ approved, data }));
 				return data;
 			}),
 		);
@@ -51,6 +52,7 @@ export const useCollateralOwned = () => {
 		setOwnedNfts(loaded_nfts);
 	};
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
 	useEffect(() => {
 		if (lendingContractReady && collateralContractReady && account) {
 			setLoading(true);

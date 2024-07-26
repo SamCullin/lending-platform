@@ -13,7 +13,7 @@ function MyApp({ Component, pageProps }: AppProps) {
 
 	return (
 		<MetaMaskUIProvider
-			debug={false}
+			debug={true}
 			networks={[
 				{
 					id: 31337,

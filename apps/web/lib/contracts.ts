@@ -1,10 +1,7 @@
-import type { SDKProvider } from "@metamask/sdk";
-import { useNetwork, useSDK } from "@metamask/sdk-react-ui";
 import type { Abi } from "abitype";
 import { erc20Abi } from "abitype/abis";
-import { Contract, type ContractInterface, ethers } from "ethers";
+import { ethers } from "ethers";
 import type { TypedContract } from "ethers-abitype";
-import { useMemo } from "react";
 
 export const lendingAbi = [
 	{
@@ -750,57 +747,9 @@ export const getContract = <T extends Abi>(
 	abi: T,
 ) => {
 	console.log("Creating Contract", address);
-	return new Contract(
+	return new ethers.Contract(
 		address,
-		abi as ContractInterface,
+		abi as ethers.ContractInterface,
 		signer,
 	) as unknown as TypedContract<T>;
-};
-
-export const useContract = <T extends Abi>(
-	address: string | undefined,
-	abi: T,
-) => {
-	const ethereum = typeof window !== "undefined" ? window.ethereum : undefined;
-	return useMemo(() => {
-		if (!address || !ethereum) {
-			return {
-				isReady: false,
-				contract: null,
-			} as const;
-		}
-		// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-		const provider = new ethers.providers.Web3Provider(ethereum as any);
-		const signer = provider.getSigner();
-		return {
-			isReady: true,
-			contract: getContract(address, signer, abi),
-		} as const;
-	}, [address, ethereum, abi]);
-};
-
-export const useContractAddresses = () => {
-	const network = useNetwork();
-	return {
-		lending: (network.chain?.contracts?.lending as { address: string })
-			?.address,
-		collateral: (network.chain?.contracts?.collateral as { address: string })
-			?.address,
-		stable: (network.chain?.contracts?.stable as { address: string })?.address,
-	};
-};
-
-export const useLendingContract = () => {
-	const { lending } = useContractAddresses();
-	return useContract(lending, lendingAbi);
-};
-
-export const useCollateralContract = () => {
-	const { collateral } = useContractAddresses();
-	return useContract(collateral, collateralAbi);
-};
-
-export const useStableContract = () => {
-	const { stable } = useContractAddresses();
-	return useContract(stable, mockStableAbi);
 };
