@@ -31,13 +31,13 @@ function MyApp({ Component, pageProps }: AppProps) {
 					},
 					contracts: {
 						lending: {
-							address: "0xA8452Ec99ce0C64f20701dB7dD3abDb607c00496",
+							address: "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
 						},
 						stable: {
-							address: "0x34A1D3fff3958843C43aD80F30b94c510645C316",
+							address: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
 						},
 						collateral: {
-							address: "0x90193C961A926261B756D1E5bb255e67ff9498A1",
+							address: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
 						},
 					},
 				},

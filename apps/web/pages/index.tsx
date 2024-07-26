@@ -6,7 +6,9 @@ import LendingForm from "../components/LendingForm";
 import LendingSummary from "../components/LendingSummary";
 import Navigation from "../components/Navigation";
 import { useCollateralDeposited } from "../hooks/useCollateralDeposited";
+import { useCollateralOwned } from "../hooks/useCollateralOwned";
 import { useCollateralStats } from "../hooks/useCollateralStats";
+import { useReset } from "../hooks/useReset";
 import {
 	CollateralAction,
 	type CollateralData,
@@ -14,43 +16,65 @@ import {
 } from "../types/collateral";
 
 const Mint: NextPage = () => {
-	const { depositedNFTs, loading, error, withdraw } = useCollateralDeposited();
+	const {
+		depositedNFTs,
+		loading,
+		error,
+		withdraw,
+		reload: reloadDeposited,
+	} = useCollateralDeposited();
+	const {
+		ownedNFTs,
+		approve,
+		deposit,
+		reload: reloadOwned,
+	} = useCollateralOwned();
 
 	const {
 		vaultData,
 		loading: statsLoading,
 		error: statsError,
+		reload: reloadStats,
 	} = useCollateralStats();
 
-	const handle = (action: CollateralAction, tokenId: string) => {
-		console.log(action, tokenId);
-		if (action === CollateralAction.withdraw) {
-			withdraw(tokenId);
-		}
+	const reload = async () => {
+		await reloadDeposited();
+		await reloadOwned();
+		await reloadStats();
 	};
 
-	const owned: CollateralData[] = [
-		{
-			tokenId: "10",
-			value: "10",
-			status: CollateralStatus.approved,
-		},
-		{
-			tokenId: "20",
-			value: "20",
-			status: CollateralStatus.owned,
-		},
-		{
-			tokenId: "30",
-			value: "30",
-			status: CollateralStatus.owned,
-		},
-		{
-			tokenId: "40",
-			value: "40",
-			status: CollateralStatus.owned,
-		},
-	];
+	const handle = async (action: CollateralAction, tokenId: string) => {
+		console.log(CollateralAction[action], tokenId);
+		switch (action) {
+			case CollateralAction.approve:
+				await approve(tokenId)
+					.then(() =>
+						console.log("Finished", CollateralAction[action], tokenId),
+					)
+					.then(() => reloadOwned())
+					.then(() => console.log("Reloaded"));
+
+				break;
+			case CollateralAction.deposit:
+				await deposit(tokenId)
+					.then(() =>
+						console.log("Finished", CollateralAction[action], tokenId),
+					)
+					.then(() => reload())
+					.then(() => console.log("Reloaded"));
+				break;
+			case CollateralAction.withdraw:
+				await withdraw(tokenId)
+					.then(() =>
+						console.log("Finished", CollateralAction[action], tokenId),
+					)
+					.then(() => reload())
+					.then(() => console.log("Reloaded"));
+				break;
+			default:
+				break;
+		}
+	};
 
 	return (
 		<div className="lending-platform">
@@ -66,13 +90,13 @@ const Mint: NextPage = () => {
 			<Navigation />
 			<CollateralList
 				title="Wallet Collateral"
-				collaterals={owned}
+				collaterals={ownedNFTs}
 				handle={handle}
 			/>
 			<LendingSummary
-				borrowed={vaultData.debt}
-				deposited={vaultData.collateral}
-				available={vaultData.vault}
+				borrowed={vaultData.borrowed}
+				deposited={vaultData.deposited}
+				available={vaultData.available}
 				vaultAvailable={vaultData.vault}
 			/>
 			<LendingForm />

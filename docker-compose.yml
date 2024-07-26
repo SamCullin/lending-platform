@@ -26,9 +26,10 @@ services:
         volumes:
             - .:/usr/src/app
         working_dir: /usr/src/app
+        env_file: "./apps/blockchain/.env"
         command:
             [
-                "forge script script/DeployContracts.s.sol --rpc-url $RPC_URL --broadcast",
+                "forge script script/DeployContracts.s.sol --rpc-url $RPC_URL --broadcast --private-key $DEPLOYER_PRIVATE_KEY",
             ]
 
 networks:

@@ -746,14 +746,10 @@ export const mockStableAbi = erc20Abi;
 
 export const getContract = <T extends Abi>(
 	address: string,
-	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-	sdk_provider: SDKProvider,
+	signer: ethers.providers.Provider | ethers.Signer,
 	abi: T,
 ) => {
 	console.log("Creating Contract", address);
-	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-	const provider = new ethers.providers.Web3Provider(sdk_provider as any);
-	const signer = provider.getSigner();
 	return new Contract(
 		address,
 		abi as ContractInterface,
@@ -773,9 +769,12 @@ export const useContract = <T extends Abi>(
 				contract: null,
 			} as const;
 		}
+		// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+		const provider = new ethers.providers.Web3Provider(ethereum as any);
+		const signer = provider.getSigner();
 		return {
 			isReady: true,
-			contract: getContract(address, ethereum, abi),
+			contract: getContract(address, signer, abi),
 		} as const;
 	}, [address, ethereum, abi]);
 };

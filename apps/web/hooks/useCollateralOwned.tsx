@@ -9,14 +9,14 @@ import { useSDK } from "@metamask/sdk-react-ui";
 import { ethers } from "ethers";
 import { type CollateralData, CollateralStatus } from "../types/collateral";
 
-export const useCollateralDeposited = () => {
+export const useCollateralOwned = () => {
 	const { account } = useSDK();
 	const { isReady: lendingContractReady, contract: lendingContract } =
 		useLendingContract();
 	const { isReady: collateralContractReady, contract: collateralContract } =
 		useCollateralContract();
 
-	const [depositedNFTs, setDepositedNFTs] = useState<CollateralData[]>([]);
+	const [ownedNFTs, setOwnedNfts] = useState<CollateralData[]>([]);
 
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<Error | null>(null);
@@ -24,19 +24,31 @@ export const useCollateralDeposited = () => {
 	const loadNFTS = async () => {
 		if (!lendingContractReady) return;
 		if (!collateralContract) return;
-		console.log("Running Deposit Load");
-		const nfts = await lendingContract.getDepositedNFTs(account);
+		console.log("Running Owned Load");
+		const nfts = await collateralContract.balanceOf(account);
 		const loaded_nfts = await Promise.all(
-			nfts.map(async (nftId) => {
-				const value = await collateralContract?.getCollateralValue(nftId);
-				return {
-					tokenId: ethers.utils.hexValue(nftId),
+			new Array(Number(nfts.toString())).fill(null).map(async (_, index) => {
+				const tokenId = await collateralContract.tokenOfOwnerByIndex(
+					account,
+					index,
+				);
+				const [value, approved] = await Promise.all([
+					collateralContract.getCollateralValue(tokenId),
+					collateralContract.getApproved(tokenId),
+				]);
+				const data: CollateralData = {
+					tokenId: ethers.utils.hexValue(tokenId),
 					value: ethers.utils.formatUnits(value, 18),
-					status: CollateralStatus.deposited,
+					status:
+						approved === lendingContract.address
+							? CollateralStatus.approved
+							: CollateralStatus.owned,
 				};
+				return data;
 			}),
 		);
-		setDepositedNFTs(loaded_nfts);
+
+		setOwnedNfts(loaded_nfts);
 	};
 
 	useEffect(() => {
@@ -61,16 +73,25 @@ export const useCollateralDeposited = () => {
 	]);
 
 	return {
-		depositedNFTs,
+		ownedNFTs,
 		loading,
 		error,
 		connected: lendingContractReady && collateralContractReady && !!account,
 		reload: () => loadNFTS(),
-		withdraw: async (tokenId: string) => {
+		deposit: async (tokenId: string) => {
 			if (!lendingContract) {
 				throw new Error("Collateral contract not ready");
 			}
-			await lendingContract.withdrawNFT(BigInt(tokenId));
+			await lendingContract.depositNFT(BigInt(tokenId));
+		},
+		approve: async (tokenId: string) => {
+			if (!collateralContract || !lendingContract) {
+				throw new Error("Collateral contract not ready");
+			}
+			await collateralContract.approve(
+				lendingContract.address,
+				BigInt(tokenId),
+			);
 		},
 	};
 };
