@@ -1,7 +1,7 @@
-import { useNetwork } from "@metamask/sdk-react-ui";
+import { useNetwork, useSDK } from "@metamask/sdk-react-ui";
 import type { Abi } from "abitype";
 import { ethers } from "ethers";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import {
 	collateralAbi,
 	getContract,
@@ -15,6 +15,7 @@ export const useContract = <T extends Abi>(
 ) => {
 	const ethereum = typeof window !== "undefined" ? window.ethereum : undefined;
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
 	return useMemo(() => {
 		if (!address || !ethereum) {
 			return {
@@ -29,18 +30,19 @@ export const useContract = <T extends Abi>(
 			isReady: true,
 			contract: getContract(address, signer, abi),
 		} as const;
-	}, [address, ethereum, abi]);
+	}, [address]);
 };
 
 export const useContractAddresses = () => {
 	const network = useNetwork();
-	return {
-		lending: (network.chain?.contracts?.lending as { address: string })
+	const contractAddresses = {
+		lending: (network.chain?.contracts?.lending as { address?: string })
 			?.address,
-		collateral: (network.chain?.contracts?.collateral as { address: string })
+		collateral: (network.chain?.contracts?.collateral as { address?: string })
 			?.address,
-		stable: (network.chain?.contracts?.stable as { address: string })?.address,
+		stable: (network.chain?.contracts?.stable as { address?: string })?.address,
 	};
+	return contractAddresses;
 };
 
 export const useLendingContract = () => {

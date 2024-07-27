@@ -9,10 +9,11 @@ export enum CollateralStatus {
 	approved = "approved",
 	deposited = "deposited",
 	locked = "locked",
+	loading = "loading",
 }
 
 export interface CollateralData {
-	tokenId: string;
-	value: string;
+	tokenId: bigint;
+	value: bigint;
 	status: CollateralStatus;
 }

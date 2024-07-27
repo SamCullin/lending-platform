@@ -3,6 +3,7 @@ import {
 	type CollateralData,
 	CollateralStatus,
 } from "../types/collateral";
+import { fmtNftId, fmtValue } from "../utils";
 import {
 	CollateralType,
 	CollateralTypeText,
@@ -12,11 +13,11 @@ import {
 import { Button, FlexContainer, FlexItem } from "./styledComponents/general";
 
 export interface CollateralProps extends CollateralData {
-	handle: (action: CollateralAction, tokenId: string) => void;
+	handle: (action: CollateralAction, tokenId: bigint) => void;
 }
 interface CollateralsProps {
 	title: string;
-	handle: (action: CollateralAction, tokenId: string) => void;
+	handle: (action: CollateralAction, tokenId: bigint) => void;
 	collaterals: CollateralData[];
 }
 
@@ -29,8 +30,8 @@ const CollateralNFT: React.FC<CollateralProps> = ({
 	return (
 		<FlexItem>
 			<CollateralType>
-				<CollateralTypeText>{tokenId}</CollateralTypeText>
-				<p>{value} USD</p>
+				<CollateralTypeText>{fmtNftId(tokenId)}</CollateralTypeText>
+				<p>{fmtValue(value)} USD</p>
 				{status === CollateralStatus.owned && (
 					<Button onClick={() => handle(CollateralAction.approve, tokenId)}>
 						Approve Deposit
@@ -49,6 +50,9 @@ const CollateralNFT: React.FC<CollateralProps> = ({
 				{status === CollateralStatus.locked && (
 					<Button disabled={true}>Locked</Button>
 				)}
+				{status === CollateralStatus.loading && (
+					<Button disabled={true}>Loading</Button>
+				)}
 			</CollateralType>
 		</FlexItem>
 	);
@@ -61,7 +65,7 @@ const CollateralList = ({ title, collaterals, handle }: CollateralsProps) => {
 			<FlexContainer gap={1}>
 				{collaterals.map((collateral) => (
 					<CollateralNFT
-						key={collateral.tokenId}
+						key={fmtNftId(collateral.tokenId)}
 						{...collateral}
 						handle={handle}
 					/>

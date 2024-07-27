@@ -1,13 +1,19 @@
-export const formatBalance = (rawBalance: string) => {
-  const balance = (parseInt(rawBalance) / 1000000000000000000).toFixed(2)
-  return balance
-}
+import { ethers } from "ethers";
+export const fmtValue = (value: string | bigint | ethers.BigNumber) => {
+	const formattedValue = ethers.utils.formatUnits(value, 18);
+	const fixedValue = Number.parseFloat(formattedValue).toFixed(2);
+	return fixedValue;
+};
 
-export const formatChainAsNum = (chainIdHex: string) => {
-  const chainIdNum = parseInt(chainIdHex)
-  return chainIdNum
-}
+export const fmtChainAsNum = (chainIdHex: string) => {
+	const chainIdNum = Number.parseInt(chainIdHex);
+	return chainIdNum;
+};
 
-export const formatAddress = (addr: string) => {
-  return `${addr.substring(0, 5)}...${addr.substring(39)}`
-}
+export const fmtNftId = (nftId: string | bigint | ethers.BigNumber) => {
+	return ethers.BigNumber.from(nftId).toHexString();
+};
+
+export const fmtAddress = (addr: string) => {
+	return `${addr.substring(0, 5)}...${addr.substring(39)}`;
+};

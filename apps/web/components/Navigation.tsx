@@ -1,22 +1,22 @@
 import { SiEthereum } from "react-icons/si";
 
 import {
-    useAccount,
-    useConnect,
-    useDisconnect,
-    useSDK,
+	useAccount,
+	useConnect,
+	useDisconnect,
+	useSDK,
 } from "@metamask/sdk-react-ui";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { useSwitchOrAddNetwork } from "../hooks/useSwitchOrAddNetwork";
-import { formatAddress } from "../utils";
+import { fmtAddress, fmtValue } from "../utils";
 import { Button, FlexContainer, FlexItem } from "./styledComponents/general";
 import {
-    Balance,
-    Logo,
-    NavigationView,
-    RightNav,
+	Balance,
+	Logo,
+	NavigationView,
+	RightNav,
 } from "./styledComponents/navigation";
 
 const Connect = () => {
@@ -63,7 +63,7 @@ const Connect = () => {
 				`App Config Broken: Network not found ${process.env.NEXT_PUBLIC_NETWORK_ID}`,
 			);
 		}
-        console.dir(network)
+		console.dir(network);
 		await switchOrAddNetwork(network);
 	};
 
@@ -116,12 +116,10 @@ const Connect = () => {
 							target="_blank"
 							data-tooltip="Open in Block Explorer"
 						>
-							{formatAddress(address)}
+							{fmtAddress(address)}
 						</Link>
 					)}
-					{!!balance && (
-						<Balance>{Number.parseInt(balance, 16) / 10 ** 18} ETH</Balance>
-					)}
+					{!!balance && <Balance>{fmtValue(balance)} ETH</Balance>}
 				</>
 			)}
 			{status === "switchNetwork" && (

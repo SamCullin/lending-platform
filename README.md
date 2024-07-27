@@ -87,3 +87,11 @@ And makes ad-hock patching unfeasible.
 There seems to be an issue when you disconnect using the metamask sdk 
 the useAccount hook will update before the useSdk hook which causes an issue on 
 when a sync between metamask sdk and wagmi sdk. 
+
+#### Metamask caching issue 1.
+No way to clear the cache of metamask, so if you have a wallet connected to the site
+Seems to be specific to the approval functions.
+
+
+#### Metamask caching issue 2.
+Getting nft approval addresses seem to be cached until the page reloads

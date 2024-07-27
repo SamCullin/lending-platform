@@ -14,48 +14,46 @@ export const useCollateralStats = () => {
 		useStableContract();
 
 	const [vaultData, setVaultData] = useState<{
-		deposited: string;
-		borrowed: string;
-		available: string;
-		vault: string;
+		deposited: bigint | null;
+		borrowed: bigint | null;
+		available: bigint | null;
+		allowance: bigint | null;
+		vault: bigint | null;
+		userBalance: bigint | null;
 	}>({
-		deposited: "...",
-		borrowed: "...",
-		available: "...",
-		vault: "...",
+		deposited: null,
+		borrowed: null,
+		available: null,
+		allowance: null,
+		vault: null,
+		userBalance: null,
 	});
 	const [loading, setLoading] = useState(false);
-	const [error, setError] = useState<Error | null>(null);
+	const [borrowLoading, setBorrowLoading] = useState(false);
+	const [repayLoading, setRepayLoading] = useState(false);
+	const [error, setError] = useState<Error | unknown | null>(null);
 
 	const loadVaultStatus = async () => {
 		if (!lendingContract) return;
 		if (!stableContract) return;
 		console.log("Running Vault Load");
-		const [[borrowed, deposited], vault] = await Promise.all([
-			lendingContract.getBalance(account).catch((err) => {
-				throw new RpcError(
-					"lendingContract.getBalance",
-					"Failed to load balance",
-					err,
-				);
-			}),
-			stableContract.balanceOf(lendingContract.address).catch((err) => {
-				throw new RpcError(
-					"stableContract.balanceOf",
-					"Failed to load balance",
-					err,
-				);
-			}),
-		]);
-		setVaultData({
-			deposited: ethers.utils.formatUnits(deposited, 18),
-			borrowed: ethers.utils.formatUnits(borrowed, 18),
-			available: ethers.utils.formatUnits(
-				ethers.BigNumber.from(deposited).sub(ethers.BigNumber.from(borrowed)),
-				18,
-			),
-			vault: ethers.utils.formatUnits(vault, 18),
-		});
+		const [[borrowed, deposited], vault, allowance, userBalance] =
+			await Promise.all([
+				lendingContract.getBalance(account),
+				stableContract.balanceOf(lendingContract.address),
+				stableContract.allowance(account, lendingContract.address),
+				stableContract.balanceOf(account),
+			]);
+		setVaultData(() => ({
+			deposited: deposited,
+			borrowed: borrowed,
+			allowance: allowance,
+			available: ethers.BigNumber.from(deposited)
+				.sub(ethers.BigNumber.from(borrowed))
+				.toBigInt(),
+			vault: vault,
+			userBalance: userBalance,
+		}));
 	};
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
@@ -65,30 +63,72 @@ export const useCollateralStats = () => {
 			loadVaultStatus()
 				.then(() => {
 					setError(null);
-					setLoading(false);
 				})
 				.catch((error) => {
-					if (error instanceof RpcError) {
-						console.error(error.call);
-					} else {
-						console.error(error);
-					}
 					setError(error);
+				})
+				.finally(() => {
+					setLoading(false);
 				});
 		}
-	}, [
-		lendingContractReady,
-		lendingContract,
-		stableContractReady,
-		stableContract,
-		account,
-	]);
+	}, [lendingContractReady, stableContractReady, account]);
 
 	return {
 		vaultData,
 		loading,
+		borrowLoading,
+		repayLoading,
 		error,
 		connected: lendingContractReady && stableContractReady && !!account,
 		reload: () => loadVaultStatus(),
+		approve: async (amount: number) => {
+			if (!stableContract || !lendingContract) return;
+			setRepayLoading(true);
+			setError(null);
+			try {
+				const res = await stableContract.approve(
+					lendingContract.address,
+					ethers.utils.parseUnits(amount.toString(), 18).toBigInt(),
+				);
+				const tx = res.wait();
+				return tx;
+			} catch (e) {
+				setError(e);
+			} finally {
+				setRepayLoading(false);
+			}
+		},
+		borrow: async (amount: number) => {
+			if (!lendingContract) return;
+			setBorrowLoading(true);
+			setError(null);
+			try {
+				const res = await lendingContract.borrow(
+					ethers.utils.parseUnits(amount.toString(), 18).toBigInt(),
+				);
+				const tx = res.wait();
+				return tx;
+			} catch (e) {
+				setError(e);
+			} finally {
+				setBorrowLoading(false);
+			}
+		},
+		repay: async (amount: number) => {
+			if (!lendingContract) return;
+			setRepayLoading(true);
+			setError(null);
+			try {
+				const res = await lendingContract.repay(
+					ethers.utils.parseUnits(amount.toString(), 18).toBigInt(),
+				);
+				const tx = res.wait();
+				return tx;
+			} catch (e) {
+				setError(e);
+			} finally {
+				setRepayLoading(false);
+			}
+		},
 	};
 };

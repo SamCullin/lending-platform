@@ -1,6 +1,7 @@
 import type { NextPage } from "next";
 import Head from "next/head";
 
+import { useEffect } from "react";
 import CollateralList from "../components/CollateralView";
 import LendingForm from "../components/LendingForm";
 import LendingSummary from "../components/LendingSummary";
@@ -8,7 +9,6 @@ import Navigation from "../components/Navigation";
 import { useCollateralDeposited } from "../hooks/useCollateralDeposited";
 import { useCollateralOwned } from "../hooks/useCollateralOwned";
 import { useCollateralStats } from "../hooks/useCollateralStats";
-import { useReset } from "../hooks/useReset";
 import {
 	CollateralAction,
 	type CollateralData,
@@ -25,7 +25,7 @@ const Mint: NextPage = () => {
 	} = useCollateralDeposited();
 	const {
 		ownedNFTs,
-		approve,
+		approve: approveNft,
 		deposit,
 		reload: reloadOwned,
 	} = useCollateralOwned();
@@ -33,8 +33,13 @@ const Mint: NextPage = () => {
 	const {
 		vaultData,
 		loading: statsLoading,
+		repayLoading,
+		borrowLoading,
 		error: statsError,
 		reload: reloadStats,
+		approve: approveDeposit,
+		borrow,
+		repay,
 	} = useCollateralStats();
 
 	const reload = async () => {
@@ -43,11 +48,11 @@ const Mint: NextPage = () => {
 		await reloadStats();
 	};
 
-	const handle = async (action: CollateralAction, tokenId: string) => {
+	const handle = async (action: CollateralAction, tokenId: bigint) => {
 		console.log(CollateralAction[action], tokenId);
 		switch (action) {
 			case CollateralAction.approve:
-				await approve(tokenId)
+				await approveNft(tokenId)
 					.then(() =>
 						console.log("Finished", CollateralAction[action], tokenId),
 					)
@@ -76,6 +81,27 @@ const Mint: NextPage = () => {
 		}
 	};
 
+	const borrowAmount = async (amount: number) => {
+		await borrow(amount).then(() => {
+			console.log("Finished borrowing", amount);
+			return Promise.all([reloadStats(), reloadDeposited()]);
+		});
+	};
+
+	const repayAmount = async (amount: number) => {
+		await repay(amount).then(() => {
+			console.log("Finished repaying", amount);
+			return Promise.all([reloadStats(), reloadDeposited()]);
+		});
+	};
+
+	const approveAmount = async (amount: number) => {
+		await approveDeposit(amount).then(() => {
+			console.log("Finished approving", amount);
+			return Promise.all([reloadStats()]);
+		});
+	};
+
 	return (
 		<div className="lending-platform">
 			<Head>
@@ -91,19 +117,29 @@ const Mint: NextPage = () => {
 			<CollateralList
 				title="Wallet Collateral"
 				collaterals={ownedNFTs}
-				handle={handle}
+				handle={(action, tokenId) => handle(action, tokenId)}
 			/>
 			<LendingSummary
 				borrowed={vaultData.borrowed}
 				deposited={vaultData.deposited}
 				available={vaultData.available}
+				userBalance={vaultData.userBalance}
 				vaultAvailable={vaultData.vault}
 			/>
-			<LendingForm />
+			<LendingForm
+				repayLoading={repayLoading}
+				borrowLoading={borrowLoading}
+				allowance={vaultData.allowance}
+				available={vaultData.available}
+				balance={vaultData.userBalance}
+				approve={(amount) => approveAmount(amount)}
+				borrow={(amount) => borrowAmount(amount)}
+				repay={(amount) => repayAmount(amount)}
+			/>
 			<CollateralList
 				title="Deposited Collateral"
 				collaterals={depositedNFTs}
-				handle={handle}
+				handle={(action, tokenId) => handle(action, tokenId)}
 			/>
 		</div>
 	);

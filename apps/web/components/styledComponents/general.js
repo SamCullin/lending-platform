@@ -13,6 +13,11 @@ export const FlexItem = styled.div`
   width: ${props => props.widthPercent || 50}%;
 `
 
+export const SmallText = styled.p`
+	font-size: 0.75rem;
+	color: #666;
+	margin-top: 0.5rem;
+`;
 export const Button = styled.button`
   border-radius: 6px;
 
@@ -95,3 +100,15 @@ export const NumberInput = styled.input.attrs({ type: 'number' })`
   }
 `;
 
+
+
+export const ErrorNumberInput = styled(NumberInput)`
+  border: 1px solid ${({ error }) => (error ? 'red' : 'transparent')};
+  background-color: ${({ error }) => (error ? '#ffe6e6' : 'initial')};
+
+  &:focus {
+    border: 1px solid ${({ error }) => (error ? 'red' : 'transparent')};
+    background-color: ${({ error }) => (error ? '#ffe6e6' : 'initial')};
+    outline: none; /* Ensure there is no default outline interfering */
+  }
+`;

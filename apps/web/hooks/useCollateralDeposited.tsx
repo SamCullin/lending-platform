@@ -16,13 +16,47 @@ export const useCollateralDeposited = () => {
 	const [depositedNFTs, setDepositedNFTs] = useState<CollateralData[]>([]);
 
 	const [loading, setLoading] = useState(false);
-	const [error, setError] = useState<Error | null>(null);
+	const [error, setError] = useState<Error | unknown | null>(null);
+
+	const nftLoading = (tokenId: bigint) => {
+		setDepositedNFTs((nfts) => {
+			return nfts.map((nft) => {
+				if (nft.tokenId === tokenId) {
+					return {
+						...nft,
+						status: CollateralStatus.loading,
+					};
+				}
+				return nft;
+			});
+		});
+	};
 
 	const loadNFTS = async () => {
 		if (!lendingContractReady) return;
 		if (!collateralContract) return;
 		console.log("Running Deposit Load");
-		const nfts = await lendingContract.getDepositedNFTs(account);
+		const [nfts, [borrowed, deposited]] = await Promise.all([
+			lendingContract.getDepositedNFTs(account).catch((err) => {
+				throw new RpcError(
+					"lendingContract.getDepositedNFTs",
+					"Failed to load deposited NFTs",
+					err,
+				);
+			}),
+			lendingContract.getBalance(account).catch((err) => {
+				throw new RpcError(
+					"lendingContract.getBalance",
+					"Failed to load balance",
+					err,
+				);
+			}),
+		]);
+
+		const available = ethers.BigNumber.from(deposited).sub(
+			ethers.BigNumber.from(borrowed),
+		);
+
 		const loaded_nfts = await Promise.all(
 			nfts.map(async (nftId) => {
 				const value = await collateralContract
@@ -35,15 +69,16 @@ export const useCollateralDeposited = () => {
 						);
 					});
 				const data = {
-					tokenId: ethers.utils.hexValue(nftId),
-					value: ethers.utils.formatUnits(value, 18),
-					status: CollateralStatus.deposited,
+					tokenId: nftId,
+					value: value,
+					status: available.sub(ethers.BigNumber.from(value)).lt(0)
+						? CollateralStatus.locked
+						: CollateralStatus.deposited,
 				};
-				console.log("Loaded Deposited NFT", JSON.stringify(data));
 				return data;
 			}),
 		);
-		setDepositedNFTs(loaded_nfts);
+		setDepositedNFTs(() => loaded_nfts);
 	};
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
@@ -64,13 +99,7 @@ export const useCollateralDeposited = () => {
 					setError(error);
 				});
 		}
-	}, [
-		lendingContractReady,
-		lendingContract,
-		collateralContractReady,
-		collateralContract,
-		account,
-	]);
+	}, [lendingContractReady, collateralContractReady, account]);
 
 	return {
 		depositedNFTs,
@@ -78,11 +107,18 @@ export const useCollateralDeposited = () => {
 		error,
 		connected: lendingContractReady && collateralContractReady && !!account,
 		reload: () => loadNFTS(),
-		withdraw: async (tokenId: string) => {
+		withdraw: async (tokenId: bigint) => {
 			if (!lendingContract) {
 				throw new Error("Collateral contract not ready");
 			}
-			await lendingContract.withdrawNFT(BigInt(tokenId));
+			setError(null);
+			nftLoading(tokenId);
+			try {
+				const res = await lendingContract.withdrawNFT(BigInt(tokenId));
+				await res.wait();
+			} catch (e) {
+				setError(e);
+			}
 		},
 	};
 };

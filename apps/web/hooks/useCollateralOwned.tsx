@@ -16,7 +16,7 @@ export const useCollateralOwned = () => {
 	const [ownedNFTs, setOwnedNfts] = useState<CollateralData[]>([]);
 
 	const [loading, setLoading] = useState(false);
-	const [error, setError] = useState<Error | null>(null);
+	const [error, setError] = useState<Error | unknown | null>(null);
 
 	const loadNFTS = async () => {
 		if (!lendingContractReady) return;
@@ -25,45 +25,42 @@ export const useCollateralOwned = () => {
 		const nfts = await collateralContract.balanceOf(account);
 		const loaded_nfts = await Promise.all(
 			new Array(Number(nfts.toString())).fill(null).map(async (_, index) => {
-				const tokenId = await collateralContract
-					.tokenOfOwnerByIndex(account, index)
-					.catch((err) => {
-						throw new RpcError(
-							"collateralContract.tokenOfOwnerByIndex",
-							"Failed to load token by owner index",
-							err,
-						);
-					});
+				const tokenId = await collateralContract.tokenOfOwnerByIndex(
+					account,
+					index,
+				);
 				const [value, approved] = await Promise.all([
-					collateralContract.getCollateralValue(tokenId).catch((err) => {
-						throw new RpcError(
-							"collateralContract.getCollateralValue",
-							"Failed to load collateral value",
-							err,
-						);
-					}),
-					collateralContract.getApproved(tokenId).catch((err) => {
-						throw new RpcError(
-							"collateralContract.getApproved",
-							"Failed to load approved status",
-							err,
-						);
-					}),
+					collateralContract.getCollateralValue(tokenId),
+					collateralContract.getApproved(tokenId),
 				]);
 				const data: CollateralData = {
-					tokenId: ethers.utils.hexValue(tokenId),
-					value: ethers.utils.formatUnits(value, 18),
+					tokenId: tokenId,
+					value: value,
 					status:
-						approved === lendingContract.address
+						approved.toString().toLowerCase() ===
+						lendingContract.address.toString().toLowerCase()
 							? CollateralStatus.approved
 							: CollateralStatus.owned,
 				};
-				console.log("Loaded Owned NFT", JSON.stringify({ approved, data }));
 				return data;
 			}),
 		);
 
-		setOwnedNfts(loaded_nfts);
+		setOwnedNfts(() => loaded_nfts);
+	};
+
+	const nftLoading = (tokenId: bigint) => {
+		setOwnedNfts((prev) => {
+			return prev.map((nft) => {
+				if (nft.tokenId === tokenId) {
+					return {
+						...nft,
+						status: CollateralStatus.loading,
+					};
+				}
+				return nft;
+			});
+		});
 	};
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
@@ -73,7 +70,6 @@ export const useCollateralOwned = () => {
 			loadNFTS()
 				.then(() => {
 					setError(null);
-					setLoading(false);
 				})
 				.catch((error) => {
 					if (error instanceof RpcError) {
@@ -82,36 +78,46 @@ export const useCollateralOwned = () => {
 						console.error(error);
 					}
 					setError(error);
+				})
+				.finally(() => {
+					setLoading(false);
 				});
 		}
-	}, [
-		lendingContractReady,
-		lendingContract,
-		collateralContractReady,
-		collateralContract,
-		account,
-	]);
+	}, [lendingContractReady, collateralContractReady, account]);
 
 	return {
 		ownedNFTs,
 		loading,
 		error,
 		connected: lendingContractReady && collateralContractReady && !!account,
-		reload: () => loadNFTS(),
-		deposit: async (tokenId: string) => {
-			if (!lendingContract) {
-				throw new Error("Collateral contract not ready");
-			}
-			await lendingContract.depositNFT(BigInt(tokenId));
+		reload: async () => {
+			await new Promise((resolve) => setTimeout(resolve, 5000));
+			await loadNFTS();
 		},
-		approve: async (tokenId: string) => {
-			if (!collateralContract || !lendingContract) {
-				throw new Error("Collateral contract not ready");
+		deposit: async (tokenId: bigint) => {
+			if (!lendingContract) return;
+			setError(null);
+			nftLoading(tokenId);
+			try {
+				const res = await lendingContract.depositNFT(BigInt(tokenId));
+				await res.wait();
+			} catch (e) {
+				setError(e);
 			}
-			await collateralContract.approve(
-				lendingContract.address,
-				BigInt(tokenId),
-			);
+		},
+		approve: async (tokenId: bigint) => {
+			if (!collateralContract || !lendingContract) return;
+			nftLoading(tokenId);
+			setError(null);
+			try {
+				const res = await collateralContract.approve(
+					lendingContract.address,
+					BigInt(tokenId),
+				);
+				await res.wait();
+			} catch (e) {
+				setError(e);
+			}
 		},
 	};
 };

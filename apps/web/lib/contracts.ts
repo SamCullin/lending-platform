@@ -746,7 +746,6 @@ export const getContract = <T extends Abi>(
 	signer: ethers.providers.Provider | ethers.Signer,
 	abi: T,
 ) => {
-	console.log("Creating Contract", address);
 	return new ethers.Contract(
 		address,
 		abi as ethers.ContractInterface,

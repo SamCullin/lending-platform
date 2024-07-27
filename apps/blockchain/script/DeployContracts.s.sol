@@ -7,12 +7,12 @@ import "../src/LendingBorrowing.sol";
 import "../src/MockStable.sol";
 
 contract DeployContracts is Script {
-
+    uint256 funderPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
+    uint256 userPrivateKey = vm.envUint("USER_PRIVATE_KEY");
 
     function run() external {
         // Get the deployer and user private keys from environment variables
-        uint256 funderPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
-        uint256 userPrivateKey = vm.envUint("USER_PRIVATE_KEY");
+        
         uint256 deployerPrivateKey = uint256(keccak256(abi.encodePacked(block.timestamp, block.difficulty)));
 
 
