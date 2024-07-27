@@ -1,24 +1,22 @@
 import { SiEthereum } from "react-icons/si";
 
 import {
-	MetaMaskButton,
-	useAccount,
-	useBalance,
-	useConnect,
-	useDisconnect,
-	useSDK,
-	useSwitchOrAddNetwork,
+    useAccount,
+    useConnect,
+    useDisconnect,
+    useSDK,
 } from "@metamask/sdk-react-ui";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { useSwitchOrAddNetwork } from "../hooks/useSwitchOrAddNetwork";
 import { formatAddress } from "../utils";
 import { Button, FlexContainer, FlexItem } from "./styledComponents/general";
 import {
-	Balance,
-	Logo,
-	NavigationView,
-	RightNav,
+    Balance,
+    Logo,
+    NavigationView,
+    RightNav,
 } from "./styledComponents/navigation";
 
 const Connect = () => {
@@ -46,7 +44,7 @@ const Connect = () => {
 		}
 	}, [chainId, chains]);
 
-	const switchNetwork = () => {
+	const switchNetwork = async () => {
 		chains.map((c) => {
 			console.log(
 				c.name,
@@ -65,8 +63,8 @@ const Connect = () => {
 				`App Config Broken: Network not found ${process.env.NEXT_PUBLIC_NETWORK_ID}`,
 			);
 		}
-
-		switchOrAddNetwork(network);
+        console.dir(network)
+		await switchOrAddNetwork(network);
 	};
 
 	let status = "connect";
@@ -137,22 +135,6 @@ const Connect = () => {
 				</Button>
 			)}
 		</>
-	);
-};
-
-const Connect2 = () => {
-	return (
-		<MetaMaskButton
-			color="blue"
-			shape="rounded"
-			icon="no-icon"
-			textAlign="middle"
-			removeDefaultStyles={true}
-			connectedComponent={<p>Connect</p>}
-			wrongNetworkComponent={<p>Wrong Network</p>}
-			connectedType="custom-text"
-			connectedText="Connected"
-		/>
 	);
 };
 

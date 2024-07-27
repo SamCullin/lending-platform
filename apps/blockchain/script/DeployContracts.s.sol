@@ -11,14 +11,33 @@ contract DeployContracts is Script {
 
     function run() external {
         // Get the deployer and user private keys from environment variables
-        uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
+        uint256 funderPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
         uint256 userPrivateKey = vm.envUint("USER_PRIVATE_KEY");
+        uint256 deployerPrivateKey = uint256(keccak256(abi.encodePacked(block.timestamp, block.difficulty)));
+
+
+
 
         address user = vm.addr(userPrivateKey);
+        address funder = vm.addr(funderPrivateKey);
         address deployer = vm.addr(deployerPrivateKey);
 
         console.log("User address: ", user);
         console.log("Deployer address: ", deployer);
+        console.log("Funder address: ", funder);
+
+        // Define the amount to transfer (in wei)
+        uint256 amount = 1 ether; // Change the amount as needed
+
+        vm.startBroadcast(funderPrivateKey);
+
+        // Transfer the native currency from deployer to recipient
+        (bool success, ) = deployer.call{value: amount}("");
+        require(success, "Transfer failed");
+
+        console.log("Transfer successful!");
+
+        vm.stopBroadcast();
 
 
         // Start broadcasting transactions

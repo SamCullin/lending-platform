@@ -3,6 +3,7 @@ import { useLendingContract, useStableContract } from "./useContract";
 
 import { useSDK } from "@metamask/sdk-react-ui";
 import { ethers } from "ethers";
+import { RpcError } from "../lib/contracts";
 
 export const useCollateralStats = () => {
 	const { account } = useSDK();
@@ -31,8 +32,20 @@ export const useCollateralStats = () => {
 		if (!stableContract) return;
 		console.log("Running Vault Load");
 		const [[borrowed, deposited], vault] = await Promise.all([
-			lendingContract.getBalance(account),
-			stableContract.balanceOf(lendingContract.address),
+			lendingContract.getBalance(account).catch((err) => {
+				throw new RpcError(
+					"lendingContract.getBalance",
+					"Failed to load balance",
+					err,
+				);
+			}),
+			stableContract.balanceOf(lendingContract.address).catch((err) => {
+				throw new RpcError(
+					"stableContract.balanceOf",
+					"Failed to load balance",
+					err,
+				);
+			}),
 		]);
 		setVaultData({
 			deposited: ethers.utils.formatUnits(deposited, 18),
@@ -55,7 +68,11 @@ export const useCollateralStats = () => {
 					setLoading(false);
 				})
 				.catch((error) => {
-					console.error(error);
+					if (error instanceof RpcError) {
+						console.error(error.call);
+					} else {
+						console.error(error);
+					}
 					setError(error);
 				});
 		}

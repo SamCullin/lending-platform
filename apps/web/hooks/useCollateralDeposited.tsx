@@ -1,12 +1,9 @@
-import { use, useEffect, useState } from "react";
-import {
-	useCollateralContract,
-	useLendingContract,
-	useStableContract,
-} from "./useContract";
+import { useEffect, useState } from "react";
+import { useCollateralContract, useLendingContract } from "./useContract";
 
 import { useSDK } from "@metamask/sdk-react-ui";
 import { ethers } from "ethers";
+import { RpcError } from "../lib/contracts";
 import { type CollateralData, CollateralStatus } from "../types/collateral";
 
 export const useCollateralDeposited = () => {
@@ -28,7 +25,15 @@ export const useCollateralDeposited = () => {
 		const nfts = await lendingContract.getDepositedNFTs(account);
 		const loaded_nfts = await Promise.all(
 			nfts.map(async (nftId) => {
-				const value = await collateralContract?.getCollateralValue(nftId);
+				const value = await collateralContract
+					?.getCollateralValue(nftId)
+					.catch((err) => {
+						throw new RpcError(
+							"collateralContract.getCollateralValue",
+							"Failed to load collateral value",
+							err,
+						);
+					});
 				const data = {
 					tokenId: ethers.utils.hexValue(nftId),
 					value: ethers.utils.formatUnits(value, 18),
@@ -51,7 +56,11 @@ export const useCollateralDeposited = () => {
 					setLoading(false);
 				})
 				.catch((error) => {
-					console.error(error);
+					if (error instanceof RpcError) {
+						console.error(error.call);
+					} else {
+						console.error(error);
+					}
 					setError(error);
 				});
 		}

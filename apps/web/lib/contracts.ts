@@ -753,3 +753,13 @@ export const getContract = <T extends Abi>(
 		signer,
 	) as unknown as TypedContract<T>;
 };
+
+export class RpcError extends Error {
+	constructor(
+		public readonly call: string,
+		public readonly message: string,
+		public readonly error: Error,
+	) {
+		super(message);
+	}
+}

@@ -1,12 +1,9 @@
-import { use, useEffect, useState } from "react";
-import {
-	useCollateralContract,
-	useLendingContract,
-	useStableContract,
-} from "./useContract";
+import { useEffect, useState } from "react";
+import { useCollateralContract, useLendingContract } from "./useContract";
 
 import { useSDK } from "@metamask/sdk-react-ui";
 import { ethers } from "ethers";
+import { RpcError } from "../lib/contracts";
 import { type CollateralData, CollateralStatus } from "../types/collateral";
 
 export const useCollateralOwned = () => {
@@ -28,13 +25,30 @@ export const useCollateralOwned = () => {
 		const nfts = await collateralContract.balanceOf(account);
 		const loaded_nfts = await Promise.all(
 			new Array(Number(nfts.toString())).fill(null).map(async (_, index) => {
-				const tokenId = await collateralContract.tokenOfOwnerByIndex(
-					account,
-					index,
-				);
+				const tokenId = await collateralContract
+					.tokenOfOwnerByIndex(account, index)
+					.catch((err) => {
+						throw new RpcError(
+							"collateralContract.tokenOfOwnerByIndex",
+							"Failed to load token by owner index",
+							err,
+						);
+					});
 				const [value, approved] = await Promise.all([
-					collateralContract.getCollateralValue(tokenId),
-					collateralContract.getApproved(tokenId),
+					collateralContract.getCollateralValue(tokenId).catch((err) => {
+						throw new RpcError(
+							"collateralContract.getCollateralValue",
+							"Failed to load collateral value",
+							err,
+						);
+					}),
+					collateralContract.getApproved(tokenId).catch((err) => {
+						throw new RpcError(
+							"collateralContract.getApproved",
+							"Failed to load approved status",
+							err,
+						);
+					}),
 				]);
 				const data: CollateralData = {
 					tokenId: ethers.utils.hexValue(tokenId),
@@ -62,7 +76,11 @@ export const useCollateralOwned = () => {
 					setLoading(false);
 				})
 				.catch((error) => {
-					console.error(error);
+					if (error instanceof RpcError) {
+						console.error(error.call);
+					} else {
+						console.error(error);
+					}
 					setError(error);
 				});
 		}

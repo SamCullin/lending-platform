@@ -79,6 +79,9 @@ test test test test test test test test test test test junk
 
 ### Struggles
 
+#### Minified Npm Packages
+The compiled npm packages should not be minified as it makes quick debugging difficult.
+And makes ad-hock patching unfeasible.
 
 #### Disconnecting wallet
 There seems to be an issue when you disconnect using the metamask sdk 

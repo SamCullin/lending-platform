@@ -1,37 +1,58 @@
 services:
-    anvil2:
-        image: ghcr.io/foundry-rs/foundry:latest
-        container_name: anvil
-        networks:
-            - demo
-        ports:
-            - "8545:8545"
-        command: ["anvil --host 0.0.0.0 "]
-        healthcheck:
-            test: ["CMD-SHELL", "nc -z 127.0.0.1 8545 || exit 1"]
-            interval: 10s
-            timeout: 10s
-            retries: 3
+  anvil:
+    image: ghcr.io/foundry-rs/foundry:latest
+    container_name: anvil
+    platform: linux/amd64
+    networks:
+      - demo
+    ports:
+      - "8545:8545"
+    command: ["anvil --host 0.0.0.0 "]
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 8545 || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 3
 
-    # deployer:
-    #     image: ghcr.io/foundry-rs/foundry:latest
-    #     container_name: deployer
-    #     depends_on:
-    #         anvil:
-    #             condition: service_healthy
-    #     environment:
-    #         RPC_URL: http://anvil:8545
-    #     networks:
-    #         - demo
-    #     volumes:
-    #         - .:/usr/src/app
-    #     working_dir: /usr/src/app
-    #     env_file: "./apps/blockchain/.env"
-    #     command:
-    #         [
-    #             "forge script script/DeployContracts.s.sol --rpc-url $RPC_URL --broadcast --private-key $DEPLOYER_PRIVATE_KEY",
-    #         ]
+  web:
+    image: oven/bun:latest
+    container_name: web
+    depends_on:
+      anvil:
+        condition: service_healthy
+    environment:
+      NEXT_TELEMETRY_DISABLED: 1
+    networks:
+      - demo
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./apps/web:/usr/src/app
+      - ./apps/web/node_modules:/usr/src/app/node_modules
+    working_dir: /usr/src/app
+    env_file: "./apps/web/.env"
+    command: ["bun", "dev"]
+
+  deployer:
+    image: ghcr.io/foundry-rs/foundry:latest
+    container_name: deployer
+    platform: linux/amd64
+    depends_on:
+      anvil:
+        condition: service_healthy
+    environment:
+      RPC_URL: http://anvil:8545
+    networks:
+      - demo
+    volumes:
+      - ./apps/blockchain:/usr/src/app
+    working_dir: /usr/src/app
+    env_file: "./apps/blockchain/.env"
+    command:
+      [
+        "forge script script/DeployContracts.s.sol --rpc-url $${RPC_URL} --broadcast --private-key $${DEPLOYER_PRIVATE_KEY} --via-ir",
+      ]
 
 networks:
-    demo:
-        name: demo
+  demo:
+    name: demo
