@@ -1,3 +1,9 @@
+# POC NFT Lending Platform
+
+
+## Introduction
+This is a proof of concept for a lending and borrowing platform where end-users can collateralize an NFT to borrow money
+
 ## Foundry
 
 **Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**

@@ -1,17 +1,17 @@
 
 export const contractAddresses = {
     "stable": {
-        "address": "0x3d12e35f213514f849e3b5d86f08459c63f7ac67",
+        "address": "0x8e3c78b5a84100284ee31fd935fe9fbbc2ff111b",
         "name": "MockStableCoin",
         "type": "stable"
     },
     "collateral": {
-        "address": "0x3abf5ece6d0ecc758de345283798cb0d4a249637",
+        "address": "0xb5310521f850ddf2db8f8e66a33c321c72d55a42",
         "name": "CollateralVault",
         "type": "collateral"
     },
     "lending": {
-        "address": "0xa6cafface6aa4d0ba0e1994536d4bad23ee92941",
+        "address": "0xa929a5f1cf6c936a5dd6b9d4dceb9daffb57ed5a",
         "name": "LendingBorrowing",
         "type": "lending"
     }

@@ -86,7 +86,7 @@ const Connect = () => {
 					marginR={1}
 					onClick={() => {
 						console.log("Connect");
-						sdk?.connect().then(() => connect());
+						connect();
 					}}
 				>
 					Connect
@@ -104,7 +104,7 @@ const Connect = () => {
 						marginR={1}
 						onClick={() => {
 							console.log("disconnect");
-							disconnectAsync().then(() => sdk?.terminate());
+							disconnectAsync();
 						}}
 					>
 						Disconnect

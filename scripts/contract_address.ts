@@ -1,8 +1,10 @@
 import { $ } from "bun";
 
-const [, , in_chainId] = process.argv;
+const [, , ...args] = process.argv;
 
-const chainId = in_chainId || "31337";
+const NO_DEPLOY = args.includes("--no-deploy");
+const chainId =
+	args.find((arg) => arg.startsWith("--chainId="))?.split("=")[1] ?? "31337";
 
 const loadContractDetails = async (chainId: string) => {
 	const file = `./apps/blockchain/broadcast/DeployContracts.s.sol/${chainId}/run-latest.json`;
@@ -29,7 +31,10 @@ const loadContractDetails = async (chainId: string) => {
 	return contracts;
 };
 
-await $`docker compose run --rm deployer`;
+if (!NO_DEPLOY) {
+	await $`docker compose run --rm deployer`;
+}
+
 const contracts = await loadContractDetails(chainId);
 console.log(contracts);
 

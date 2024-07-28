@@ -7,10 +7,9 @@ services:
             - demo
         ports:
             - "8545:8545"
-              # Seems like MetaMask only loads data after block is 1 depth
         command:
             [
-                "anvil --host 0.0.0.0 --block-time 1 --transaction-block-keeper=100  --disable-block-gas-limit  ",
+                "anvil --host 0.0.0.0 --transaction-block-keeper=100  --disable-block-gas-limit  ",
             ]
         healthcheck:
             test: ["CMD-SHELL", "nc -z 127.0.0.1 8545 || exit 1"]
@@ -24,6 +23,8 @@ services:
         depends_on:
             anvil:
                 condition: service_healthy
+            config_copy:
+                condition: service_completed_successfully
         environment:
             NEXT_TELEMETRY_DISABLED: 1
         networks:
@@ -56,6 +57,20 @@ services:
             [
                 "forge script script/DeployContracts.s.sol --rpc-url $${RPC_URL} --broadcast --private-key $${DEPLOYER_PRIVATE_KEY} --no-gas-limit --no-rpc-rate-limit --json",
             ]
+    config_copy:
+        image: oven/bun:latest
+        depends_on:
+            anvil:
+                condition: service_healthy
+            deployer:
+                condition: service_completed_successfully
+        volumes:
+            - ./apps/blockchain/broadcast/DeployContracts.s.sol/31337/run-latest.json:/usr/src/app/apps/blockchain/broadcast/DeployContracts.s.sol/31337/run-latest.json
+            - ./apps/web/lib/:/usr/src/app/apps/web/lib/
+            - ./scripts/contract_address.ts:/usr/src/app/scripts/contract_address.ts
+        working_dir: /usr/src/app/
+
+        command: ["bun", "run", "./scripts/contract_address.ts", "--no-deploy"]
 
 networks:
     demo:
