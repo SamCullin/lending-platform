@@ -1,103 +1,81 @@
 # POC NFT Lending Platform
 
-
 ## Introduction
-This is a proof of concept for a lending and borrowing platform where end-users can collateralize an NFT to borrow money
+This is a small POC of a lending platform where users can deposit NFTs and borrow stable coins against them.
 
-## Foundry
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
 
-Foundry consists of:
+## Getting started
 
--   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
--   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
--   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
--   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+### Project
 
-## Documentation
+#### [./apps/blockchain](./apps/blockchain/README.md)
+This is a foundry project that contains the 3 contracts that are used in the lending platform.
 
-https://book.getfoundry.sh/
+#### [./apps/web](./apps/web/README.md)
+This is a nextjs project that contains the frontend for the lending platform.
 
-## Usage
+#### [./docker-compose.yml](./docker-compose.yml)
+This is the docker-compose file that will start the foundry node and the nextjs app.
 
-### Build
 
-```shell
-$ forge build
+### Installation
+
+Install Web App Deps
+```sh
+cd apps/web
+bun i
 ```
-
-### Test
-
-```shell
-$ forge test
-```
-
-### Format
-
-```shell
-$ forge fmt
-```
-
-### Gas Snapshots
-
-```shell
-$ forge snapshot
-```
-
-### Anvil
-
-```shell
-$ anvil
-```
-
-### Deploy
-
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
-
-### Cast
-
-```shell
-$ cast <subcommand>
-```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
+Clone foundry submodules
+```sh
+git submodule update --init --recursive
 ```
 
 
 
-== Logs ==
-  MockStableCoin deployed at: 0x34A1D3fff3958843C43aD80F30b94c510645C316
-  CollateralVault deployed at: 0x90193C961A926261B756D1E5bb255e67ff9498A1
-  LendingBorrowing deployed at: 0xA8452Ec99ce0C64f20701dB7dD3abDb607c00496
+### Usage
 
-## Setting up 1 EVM.
+Start the app
+```sh
+docker compose up -d
+```
 
-test test test test test test test test test test test junk
+```sh
+docker compose logs anvil
+```
+Import the 6th private key into metamask.
+Or use the following mnemonic to import the account into metamask.
 
 
-### Struggles
+Open the webpage
+```sh
+open http://localhost:3000
+```
+Use the newly imported account to connect to the site.
 
-#### Minified Npm Packages
+
+## Struggles
+
+### Minified Npm Packages
 The compiled npm packages should not be minified as it makes quick debugging difficult.
 And makes ad-hock patching unfeasible.
 
-#### Disconnecting wallet
+**Workaround:** Coped the hook that needed the change into the project
+
+### Disconnecting wallet
 There seems to be an issue when you disconnect using the metamask sdk 
 the useAccount hook will update before the useSdk hook which causes an issue on 
 when a sync between metamask sdk and wagmi sdk. 
 
-#### Metamask caching issue 1.
+**Workaround:** Left this now the app will attempt to reconnect the wallet if it is disconnected.
+
+### Metamask caching issue 1.
 No way to clear the cache of metamask, so if you have a wallet connected to the site
 Seems to be specific to the approval functions.
 
+**Workaround:** Added randon nonce when deploying contract to force unique contract addresses.
 
-#### Metamask caching issue 2.
+### Metamask caching issue 2.
 Getting nft approval addresses seem to be cached until the page reloads
+
+**Workaround:** Added randon nonce when deploying contract to force unique contract addresses.
